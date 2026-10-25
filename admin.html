@@ -17,7 +17,7 @@
   if (me.role !== 'admin') { root.innerHTML = '<main><p class="card">Dieser Bereich ist nur für Administratoren. <a href="./index.html">Zurück</a></p></main>'; return; }
   root.innerHTML = `<header><span class="logo" role="img" aria-label="Logo"></span><b>Admin</b><a href="./index.html">← Zur Jugendseite</a></header><main><form id="f" class="card"><h2>Neues Meeting</h2>
   <label>Titel<input name="title" required></label><label>Datum und Uhrzeit<input name="at" type="datetime-local" required></label>
-  <label>Leitung (Namen, z. B. „Anna, Ben“)<input name="leaders"></label><label>Ort<input name="loc"></label>
+  <label>Prediger (Namen, z. B. „Anna, Ben“)<input name="leaders"></label><label>Ort<input name="loc"></label>
   <label>Art<select name="kind"><option>Meeting</option><option>Jugendgottesdienst</option><option>Veranstaltung</option></select></label>
   <label>Beschreibung<textarea name="desc" rows="3"></textarea></label>
   <label>Aufgaben (eine pro Zeile)<textarea name="tasks" rows="8">Begrüßung\nGebet\nBibellesung\nPredigt\nFürbitten\nTechnik\nAufbau\nAbbau</textarea></label>
