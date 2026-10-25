@@ -1,0 +1,102 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Einrichtung – Ev. Jugend Castrop-Rauxel-Nord</title><link rel="icon" type="image/png" href="./src/favicon.png"><link rel="stylesheet" href="./src/style.css"></head>
+<body><main>
+<section class="card"><h1>Einrichtung (einmalig)</h1>
+<noscript><p style="color:#a3341f"><b>JavaScript ist in deinem Browser ausgeschaltet. Diese Seite braucht es.</b></p></noscript>
+<p id="status" style="font-weight:600">Prüfe Seite …</p>
+<p>Diese Seite legt Tabellen, Spalten, Rechte und den Datei-Speicher in Appwrite automatisch an. Du brauchst dafür einen <b>temporären API-Schlüssel</b>:</p>
+<ol><li>Appwrite → dein Projekt → <b>Overview</b> → <b>Integrations</b> → <b>API keys</b> → <b>Create API key</b>, Name „setup“.</li>
+<li>Bei den <b>Scopes</b> alle Einträge unter <b>Database/Tables</b>, <b>Storage</b> und <b>Users</b> anhaken (lieber zu viele als zu wenige). Create.</li>
+<li>Den „Secret“ des Schlüssels kopieren und unten einfügen. Er wird nur in deinem Browser benutzt und nirgends gespeichert.</li>
+<li><b>Danach den Schlüssel in Appwrite wieder löschen.</b></li></ol>
+<p><b>Vorher:</b> <button id="test">Verbindung testen</button> (ohne Schlüssel – zeigt, ob Appwrite diese Seite akzeptiert)</p>
+<label>API-Schlüssel<input id="key" type="password" autocomplete="off"></label>
+<button id="go" class="primary">Einrichtung starten</button> <button id="us">Konten verwalten</button>
+<pre id="log" style="white-space:pre-wrap" aria-live="polite"></pre><div id="users"></div></section></main>
+<script src="./src/config.js"></script>
+<script>
+const $ = id => document.getElementById(id), log = t => $('log').textContent += t + '\n';
+const status = (t, bad) => { const e = $('status'); e.textContent = t; e.style.color = bad ? '#a3341f' : '#1f6f5c'; };
+const cfgOk = () => typeof APPWRITE_ENDPOINT !== 'undefined' && typeof DB_ID !== 'undefined';
+const needCfg = () => { if (cfgOk()) return true; log('✘ Die Datei src/config.js wurde nicht gefunden. Lade den Ordner „src“ ins GitHub-Repository hoch (neben setup.html) und lade diese Seite mit Strg+F5 neu.'); return false; };
+window.addEventListener('error', e => { log('FEHLER im Skript: ' + e.message); status('✘ Fehler im Skript: ' + e.message, true); });
+window.addEventListener('unhandledrejection', e => log('FEHLER: ' + ((e.reason && e.reason.message) || e.reason)));
+if (!cfgOk()) status('✘ Die Datei src/config.js wurde nicht gefunden. Vermutlich fehlt der Ordner „src“ im GitHub-Repository, oder die Seite wurde per Doppelklick geöffnet.', true);
+else status('✔ Seite geladen (Version 2). Adresse: ' + location.hostname + (location.protocol === 'file:' ? ' – ACHTUNG: per Doppelklick geöffnet, das geht nicht. Nimm die GitHub-Pages-Adresse.' : ''));
+const PERMS = {
+  content: ['read("users")', 'create("label:admin")', 'update("label:admin")', 'delete("label:admin")'],
+  tasks: ['read("users")', 'update("users")', 'create("label:admin")', 'update("label:admin")', 'delete("label:admin")']
+};
+let DB;
+async function api(method, path, body) {
+  let r;
+  try { r = await fetch(APPWRITE_ENDPOINT + path, { method, headers: { 'Content-Type': 'application/json', 'X-Appwrite-Project': APPWRITE_PROJECT, 'X-Appwrite-Key': $('key').value.trim() }, body: body ? JSON.stringify(body) : undefined }); }
+  catch (e) { throw new Error('Verbindung blockiert. Trage in Appwrite unter Overview → Add platform → Web die Adresse dieser Seite ein (z. B. DEINNAME.github.io) und lade die Seite neu.'); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(j.message || ('Fehler ' + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function ok(fn, what) { try { await fn(); log('✔ ' + what); } catch (e) { if (e.status === 409) log('✔ ' + what + ' (war schon da)'); else throw new Error(what + ': ' + e.message); } }
+async function waitCol(base, t, k) { for (let i = 0; i < 40; i++) { const c = await api('GET', `${base}/${t}/columns/${k}`); if (c.status === 'available') return; await sleep(1500); } throw new Error('Spalte ' + k + ' wird nicht fertig'); }
+$('test').onclick = async () => {
+  $('log').textContent = ''; if (!needCfg()) return;
+  try {
+    const r = await fetch(APPWRITE_ENDPOINT + '/account', { headers: { 'X-Appwrite-Project': APPWRITE_PROJECT }, credentials: 'include' });
+    if (r.status === 401 || r.ok) log('✔ Verbindung klappt. Appwrite akzeptiert diese Seite (' + location.hostname + ').');
+    else { const j = await r.json().catch(() => ({})); log('Appwrite antwortet, aber mit: ' + (j.message || r.status)); }
+  } catch (e) { log('✘ Verbindung blockiert. Trage in Appwrite unter Overview → Add platform → Web genau diesen Hostnamen ein: ' + location.hostname + ' (ohne https://) und lade diese Seite neu. Diese Seite muss über GitHub Pages geöffnet sein, nicht per Doppelklick auf die Datei.'); }
+};
+$('go').onclick = async () => {
+  $('log').textContent = ''; if (!needCfg()) return; DB = DB_ID;
+  if (!$('key').value.trim()) return log('Bitte zuerst den API-Schlüssel einfügen.');
+  try {
+    let dbOk = false;
+    try { await api('GET', '/tablesdb/' + DB); log('✔ Datenbank „' + DB + '“ gefunden'); dbOk = true; }
+    catch (e) { if (e.status !== 404) throw new Error('Datenbank prüfen: ' + e.message); }
+    if (!dbOk) {
+      try { await api('POST', '/tablesdb', { databaseId: DB, name: 'Jugend' }); log('✔ Datenbank „' + DB + '“ angelegt'); }
+      catch (e) {
+        let list = []; try { list = (await api('GET', '/tablesdb')).databases || []; } catch (x) {}
+        if (list.length === 1) { DB = list[0].$id; log('ℹ Neue Datenbank nicht möglich (' + e.message + '). Ich nehme stattdessen deine vorhandene Datenbank „' + list[0].name + '“ (ID: ' + DB + ').'); }
+        else throw new Error('Datenbank „' + DB + '“ gibt es nicht und kann nicht angelegt werden (' + e.message + ').' + (list.length ? '\nVorhandene Datenbanken: ' + list.map(d => d.name + ' (ID: ' + d.$id + ')').join(', ') + '\nLösche in Appwrite eine unbenutzte Datenbank oder schick mir die richtige ID.' : ''));
+      }
+    }
+    const base = `/tablesdb/${DB}/tables`;
+    for (const [t, p] of Object.entries(PERMS)) {
+      try { await api('POST', base, { tableId: t, name: t, permissions: p, rowSecurity: false }); log('✔ Tabelle ' + t); }
+      catch (e) { if (e.status !== 409) throw new Error('Tabelle ' + t + ': ' + e.message); await api('PUT', `${base}/${t}`, { name: t, permissions: p, rowSecurity: false }); log('✔ Tabelle ' + t + ' (war schon da, Rechte aktualisiert)'); }
+      await ok(() => api('POST', `${base}/${t}/columns/string`, { key: 'rtype', size: 40, required: true }), 'Spalte rtype in ' + t);
+      await ok(() => api('POST', `${base}/${t}/columns/string`, { key: 'data', size: 20000, required: true }), 'Spalte data in ' + t);
+      await waitCol(base, t, 'rtype'); await waitCol(base, t, 'data');
+      await ok(() => api('POST', `${base}/${t}/indexes`, { key: 'idx_rtype', type: 'key', columns: ['rtype'] }), 'Index in ' + t);
+    }
+    const bp = ['read("users")', 'create("label:admin")', 'update("label:admin")', 'delete("label:admin")'];
+    let bExists = true;
+    try { await api('GET', '/storage/buckets/' + BUCKET); } catch (e) { if (e.status !== 404) throw new Error('Speicher prüfen: ' + e.message); bExists = false; }
+    if (bExists) { await api('PUT', '/storage/buckets/' + BUCKET, { name: BUCKET, permissions: bp, fileSecurity: false }); log('✔ Speicher ' + BUCKET + ' (Rechte aktualisiert)'); }
+    else { await api('POST', '/storage/buckets', { bucketId: BUCKET, name: BUCKET, permissions: bp, fileSecurity: false }); log('✔ Speicher ' + BUCKET + ' angelegt'); }
+    if (DB !== DB_ID) log('\n⚠ WICHTIG: Öffne die Datei src/config.js und ändere bei DB_ID den Wert \'' + DB_ID + '\' in \'' + DB + '\'. Sonst findet die Seite die Daten nicht.');
+    log('\nFERTIG. Nächste Schritte: 1) Auf der Hauptseite ein Konto anlegen. 2) Hier „Konten verwalten“ → bei deinem Namen „Admin“. 3) Danach den API-Schlüssel in Appwrite löschen.');
+  } catch (e) { log('\nFEHLER: ' + e.message); }
+};
+$('us').onclick = async () => {
+  if (!needCfg()) return;
+  const box = $('users'); box.textContent = '';
+  try {
+    const r = await api('GET', '/users');
+    if (!r.users.length) box.textContent = 'Noch keine Konten.';
+    r.users.forEach(u => {
+      const row = document.createElement('div'); row.className = 'slot';
+      const n = document.createElement('b'); n.textContent = u.name; const st = document.createElement('span'); st.className = 'badge';
+      const show = L => st.textContent = L.includes('admin') ? 'Admin' : 'Mitglied'; show(u.labels || []);
+      row.append(n, st);
+      [['Mitglied', []], ['Admin', ['admin']]].forEach(([t, L]) => { const b = document.createElement('button'); b.textContent = t;
+        b.onclick = async () => { try { await api('PUT', `/users/${u.$id}/labels`, { labels: L }); show(L); } catch (e) { alert(e.message); } }; row.append(b); });
+      const pb = document.createElement('button'); pb.textContent = 'Passwort neu setzen';
+      pb.onclick = async () => { const pw = prompt('Neues Passwort für ' + u.name + ' (mindestens 8 Zeichen):'); if (!pw) return; try { await api('PATCH', `/users/${u.$id}/password`, { password: pw }); alert('Passwort geändert.'); } catch (e) { alert(e.message); } };
+      row.append(pb); box.append(row);
+    });
+  } catch (e) { box.textContent = 'Fehler: ' + e.message; }
+};
+</script></body></html>
