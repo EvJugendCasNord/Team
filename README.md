@@ -13,10 +13,11 @@ Name + Passwort genügen. Wer sich einmal angemeldet hat, bleibt auf diesem Ger�
 Admin machen: `setup.html` → Konten verwalten, oder in Appwrite unter Auth → Users → Person → Labels → `admin`.
 
 ## Bearbeiten als Admin
-Es gibt keine getrennte Admin-Seite mehr. Admins sehen dieselbe Seite wie alle, nur mit zusätzlichen Knöpfen:
-- Reiter **Meeting**: „+ Neues Meeting“, bei jedem Meeting **Bearbeiten** und **Löschen** (auch für vergangene Meetings, ganz unten).
-- Reiter **Aufgaben**: bei jeder Aufgabe **Löschen**.
-- Reiter **Predigten, Fürbitten, Spiele, Downloads**: unten ein Bereich zum Anlegen, Ändern und Löschen.
+Es gibt zwei Seiten mit dem gleichen Aufbau und der gleichen Menüleiste:
+- `index.html` ist die normale Ansicht für alle (nur Lesen und Eintragen).
+- `admin.html` ist die Bearbeitungsansicht. Admins kommen über den Menüpunkt **Admin** ganz rechts im Menü dorthin. Mitglieder sehen den Punkt nicht und kommen auf `admin.html` nicht weiter.
+
+In der Bearbeitungsansicht: Reiter **Meeting** und **Kalender** haben „+ Neues Meeting“ sowie bei jedem Meeting **Bearbeiten** und **Löschen**. Vergangene Meetings stehen ganz unten im Reiter Meeting. Reiter **Aufgaben**: **Löschen**. Reiter **Predigten, Fürbitten, Spiele, Downloads**: unten Bereich zum Anlegen, Ändern, Löschen.
 
 ## Sicherheit (bitte lesen)
 - Wer ein Konto anlegt, sieht sofort alles. Es gibt keine Freischaltung mehr. Schutz davor bietet nur der Zugangscode (`ZUGANGSCODE` in `src/config.js`, Standard 1968). Er steht im Seitenquelltext und ist ein Sichtschutz, kein echter Schutz. Gib die Adresse nur ans Team weiter und ändere den Code gelegentlich.

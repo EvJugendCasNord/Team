@@ -114,6 +114,6 @@ async function requireLogin(box) {
 
 // Gemeinsamer Kopfbereich für Hauptseite und Admin-Seite. prefix = '' auf der Hauptseite, './index.html' auf der Admin-Seite.
 const tabs = [['dashboard', 'Dashboard'], ['meetings', 'Meeting'], ['kalender', 'Kalender'], ['aufgaben', 'Aufgaben'], ['predigten', 'Predigten'], ['fuerbitten', 'Fürbitten'], ['spiele', 'Spiele'], ['downloads', 'Downloads']];
-function siteHeader(me, active, prefix = '') {
-  return `<header><span class="logo" role="img" aria-label="Logo"></span><b>Ev. Jugend Castrop-Rauxel-Nord</b><nav aria-label="Hauptmenü">${tabs.map(([k, l]) => `<a href="${prefix}#${k}"${k === active ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav><span style="flex:1"></span>${me.role === 'admin' ? '<span class="badge">Admin</span>' : ''}<span class="mute">${esc(me.display_name)}</span><button id="out">Abmelden</button></header>`;
+function siteHeader(me, active, prefix = '', editMode = false) {
+  return `<header><span class="logo" role="img" aria-label="Logo"></span><b>Ev. Jugend Castrop-Rauxel-Nord</b><nav aria-label="Hauptmenü">${tabs.map(([k, l]) => `<a href="${prefix}#${k}"${k === active ? ' aria-current="page"' : ''}>${l}</a>`).join('')}${me.role === 'admin' ? (editMode ? '<a href="./index.html">← Normale Ansicht</a>' : '<a href="./admin.html">Admin</a>') : ''}</nav><span style="flex:1"></span>${editMode ? '<span class="badge">Bearbeitungsansicht</span>' : ''}<span class="mute">${esc(me.display_name)}</span><button id="out">Abmelden</button></header>`;
 }
