@@ -5,8 +5,8 @@ const TYPES = {
   intercession: { label: 'Fürbitten', title: 'title', f: [{ k: 'topic', l: 'Thema', r: 1 }, { k: 'title', l: 'Titel', r: 1 }, { k: 'body', l: 'Text', t: 'area', r: 1 }] },
   game: { label: 'Spiele', title: 'name', f: [{ k: 'name', l: 'Name', r: 1 }, { k: 'category', l: 'Kategorie' }, { k: 'short', l: 'Kurzbeschreibung' }, { k: 'instructions', l: 'Anleitung', t: 'area' }, { k: 'materials', l: 'Material' }, { k: 'participants', l: 'Teilnehmende (z. B. 8–20)' }, { k: 'duration', l: 'Dauer' }, { k: 'age', l: 'Alter' }, { k: 'video_url', l: 'YouTube-Link (nur echte Links, sonst leer)', t: 'url' }] }
 };
-async function initCms(box) {
-  let key = 'download', rows = [], cats = [], edit = null;
+async function initCms(box, keys = Object.keys(TYPES), onDone = () => {}) {
+  let key = keys[0], rows = [], cats = [], edit = null;
   const T = () => TYPES[key];
   async function load() {
     try { rows = await dbList(C_CONTENT, key); cats = await dbList(C_CONTENT, 'dl_category'); }
@@ -19,19 +19,20 @@ async function initCms(box) {
     if (f.t === 'file') return `<label>${f.l}<input type="file" id="file" ${edit.id ? '' : 'required'}>${edit.file_name ? `<span class="mute">Aktuell: ${esc(edit.file_name)} (leer lassen = behalten)</span>` : ''}</label>`;
     return `<label>${f.l}<input data-k="${f.k}" type="${f.t || 'text'}" value="${val}" ${r}></label>`;
   };
+  const done = async () => { edit = null; await load(); paint(); await onDone(); };
   function paint() {
-    box.innerHTML = `<section class="card ed"><h2>Inhalte verwalten</h2><p class="mute">Alles hier ist sofort für das ganze Team sichtbar.</p>
-      <div class="chips">${Object.entries(TYPES).map(([k, t]) => `<button data-type="${k}" aria-pressed="${k === key}">${t.label}</button>`).join('')}</div>
+    box.innerHTML = `<section class="card ed"><h2>${keys.length > 1 ? 'Inhalte bearbeiten' : T().label + ' bearbeiten'}</h2><p class="mute">Nur für Admins sichtbar. Änderungen sind sofort für das ganze Team sichtbar.</p>
+      ${keys.length > 1 ? `<div class="chips">${keys.map(k => `<button data-type="${k}" aria-pressed="${k === key}">${TYPES[k].label}</button>`).join('')}</div>` : ''}
       ${edit ? `<h3>${edit.id ? 'Bearbeiten' : 'Neu anlegen'}</h3><form id="cf">${T().f.map(f => fld(f, edit[f.k])).join('')}<button class="primary">Speichern</button> <button type="button" id="cx">Abbrechen</button></form>`
-        : `<button id="nw" class="primary">+ Neu anlegen</button> <button id="sd">Beispielinhalte anlegen (nur einmal)</button><ul class="l">${rows.map(r => `<li>${esc(r[T().title])} <button data-e="${r.id}">Bearbeiten</button> <button data-d="${r.id}">Löschen</button></li>`).join('') || '<li class="mute">Noch nichts angelegt.</li>'}</ul>`}</section>`;
+        : `<button id="nw" class="primary">+ Neu anlegen</button> ${key === 'sermon_idea' && !rows.length ? '<button id="sd">Beispielinhalte anlegen (nur einmal)</button>' : ''}<ul class="l">${rows.map(r => `<li>${esc(r[T().title])} <button data-e="${r.id}">Bearbeiten</button> <button data-d="${r.id}">Löschen</button></li>`).join('') || '<li class="mute">Noch nichts angelegt.</li>'}</ul>`}</section>`;
     box.querySelectorAll('[data-type]').forEach(b => b.onclick = async () => { key = b.dataset.type; edit = null; await load(); paint(); });
     box.querySelector('#nw')?.addEventListener('click', () => { edit = {}; paint(); });
     box.querySelector('#cx')?.addEventListener('click', () => { edit = null; paint(); });
-    box.querySelector('#sd')?.addEventListener('click', async () => { if (!confirm('Beispielinhalte wirklich anlegen?')) return; try { await seedAll(); toast('Beispielinhalte angelegt.'); await load(); paint(); if (window.initLit) initLit(document.getElementById('lit')); } catch (e) { toast('Fehler: ' + e.message, true); } });
+    box.querySelector('#sd')?.addEventListener('click', async () => { if (!confirm('Beispielinhalte wirklich anlegen?')) return; try { await seedAll(); toast('Beispielinhalte angelegt.'); await done(); } catch (e) { toast('Fehler: ' + e.message, true); } });
     box.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { edit = rows.find(r => r.id === b.dataset.e); paint(); });
     box.querySelectorAll('[data-d]').forEach(b => b.onclick = async () => {
       const r = rows.find(x => x.id === b.dataset.d); if (!confirm('„' + r[T().title] + '“ wirklich löschen?')) return;
-      try { if (key === 'download' && r.file_id) await aw.deleteFile(r.file_id).catch(() => {}); await dbDelete(C_CONTENT, r.id); toast('Gelöscht.'); await load(); paint(); }
+      try { if (key === 'download' && r.file_id) await aw.deleteFile(r.file_id).catch(() => {}); await dbDelete(C_CONTENT, r.id); toast('Gelöscht.'); await done(); }
       catch (e) { toast('Löschen fehlgeschlagen: ' + e.message, true); }
     });
     const form = box.querySelector('#cf');
@@ -48,7 +49,7 @@ async function initCms(box) {
           rec.file_id = up.$id; rec.file_name = file.name;
         }
         if (edit.id) await dbUpdate(C_CONTENT, edit.id, key, rec); else await dbCreate(C_CONTENT, key, rec);
-        toast('Gespeichert – für alle sichtbar.'); edit = null; await load(); paint();
+        toast('Gespeichert – für alle sichtbar.'); await done();
       } catch (ex) { toast('Speichern fehlgeschlagen: ' + ex.message, true); }
     };
   }

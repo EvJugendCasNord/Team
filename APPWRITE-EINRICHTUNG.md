@@ -18,4 +18,4 @@ Du musst in Appwrite **nichts von Hand anlegen** – keine Datenbank, keine Tabe
 Danach den API-Schlüssel in Appwrite **löschen** (und `setup.html` aus dem Repository).
 
 Fertig! Alle anderen Personen legen sich einfach selbst ein Konto an (Name + Passwort). Die Anmeldung bleibt auf dem Gerät gespeichert.
-Beispielinhalte: Admin-Seite → Inhalte verwalten → „Beispielinhalte anlegen“ (einmal).
+Beispielinhalte (optional): als Admin im Reiter Predigten ganz unten „Beispielinhalte anlegen“ (nur einmal, der Knopf verschwindet danach).

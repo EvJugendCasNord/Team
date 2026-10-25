@@ -12,6 +12,12 @@ Reines HTML/JS, kein Build nötig. Backend: Appwrite Cloud (kostenlos). Die Seit
 Name + Passwort genügen. Wer sich einmal angemeldet hat, bleibt auf diesem Gerät angemeldet. Wer ein Konto hat, kann alles lesen und sich bei Aufgaben eintragen. Inhalte anlegen/ändern dürfen nur Admins.
 Admin machen: `setup.html` → Konten verwalten, oder in Appwrite unter Auth → Users → Person → Labels → `admin`.
 
+## Bearbeiten als Admin
+Es gibt keine getrennte Admin-Seite mehr. Admins sehen dieselbe Seite wie alle, nur mit zusätzlichen Knöpfen:
+- Reiter **Meeting**: „+ Neues Meeting“, bei jedem Meeting **Bearbeiten** und **Löschen** (auch für vergangene Meetings, ganz unten).
+- Reiter **Aufgaben**: bei jeder Aufgabe **Löschen**.
+- Reiter **Predigten, Fürbitten, Spiele, Downloads**: unten ein Bereich zum Anlegen, Ändern und Löschen.
+
 ## Sicherheit (bitte lesen)
 - Wer ein Konto anlegt, sieht sofort alles. Es gibt keine Freischaltung mehr. Schutz davor bietet nur der Zugangscode (`ZUGANGSCODE` in `src/config.js`, Standard 1968). Er steht im Seitenquelltext und ist ein Sichtschutz, kein echter Schutz. Gib die Adresse nur ans Team weiter und ändere den Code gelegentlich.
 - Aufgaben-Eintragungen: Dass nur die eigene Eintragung geändert wird, prüft die Seite, nicht der Server.

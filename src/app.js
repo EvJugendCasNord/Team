@@ -38,15 +38,16 @@ const views = {
     <section class="card"><h2>Anstehende Deadlines</h2><ul class="l">${dl.map(t => `<li>${fmtDay(t.due_date)}: ${esc(t.title)}<br><span class="mute">${esc(mName(t.meeting_id))}</span></li>`).join('') || '<li class="mute">Keine Fristen.</li>'}</ul></section></div>`;
   },
   meetings() {
-    return upcoming().map(m => { const lit = lits.find(l => l.meeting_id === m.id);
-      return `<article class="card"><h2>${esc(m.title)}</h2><p class="mute">${fmt(m.starts_at)}</p>${m.leaders ? `<p><b>Prediger:</b> ${esc(m.leaders)}</p>` : ''}${lit ? `<p><a href="#liturgie/${lit.id}"><b>Liturgie ansehen</b></a></p>` : ''}${m.description ? `<p>${esc(m.description)}</p>` : ''}${m.notes ? `<p class="mute">${esc(m.notes)}</p>` : ''}${tasks.filter(t => t.meeting_id === m.id).map(slotHtml).join('')}</article>`; }).join('') || '<p class="card mute">Noch keine Meetings. Ein Admin kann sie unter „Admin“ anlegen.</p>';
+    const adm = me.role === 'admin';
+    return (adm ? adminMeetingForm() : '') + (upcoming().map(m => { const lit = lits.find(l => l.meeting_id === m.id);
+      return `<article class="card"><h2>${esc(m.title)}</h2><p class="mute">${fmt(m.starts_at)}</p>${m.leaders ? `<p><b>Prediger:</b> ${esc(m.leaders)}</p>` : ''}${lit ? `<p><a href="#liturgie/${lit.id}"><b>Liturgie ansehen</b></a></p>` : ''}${m.description ? `<p>${esc(m.description)}</p>` : ''}${m.notes ? `<p class="mute">${esc(m.notes)}</p>` : ''}${adm ? `<p class="noprint"><button data-medit="${m.id}">Bearbeiten</button> <button data-mdel="${m.id}">Löschen</button></p>` : ''}${tasks.filter(t => t.meeting_id === m.id).map(slotHtml).join('')}</article>`; }).join('') || `<p class="card mute">Noch keine Meetings.${adm ? '' : ' Ein Admin kann sie anlegen.'}</p>`) + (adm ? adminPastMeetings() : '');
   },
   kalender() {
     const by = {}; meetings.forEach(m => (by[m.starts_at.slice(0, 7)] ??= []).push(m));
     return Object.keys(by).sort().map(k => `<section class="card"><h2>${new Date(k + '-01').toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</h2><ul class="l">${by[k].map(m => `<li><b>${fmt(m.starts_at)}</b> – <a href="#meetings">${esc(m.title)}</a>${m.leaders ? ` <span class="mute">(${esc(m.leaders)})</span>` : ''}</li>`).join('')}</ul></section>`).join('') || '<p class="card mute">Keine Termine.</p>';
   },
   aufgaben() {
-    return `<section class="card"><h2>Alle Aufgaben</h2><ul class="l">${tasks.map(t => `<li>${esc(t.title)} <span class="badge">${esc(t.status)}</span><br><span class="mute">${esc(mName(t.meeting_id))} · ${esc(t.assignee_name || 'frei')}</span>${t.assignee_id === me.id || me.role === 'admin' ? ` <select data-st="${t.id}" aria-label="Status">${['offen', 'in Bearbeitung', 'erledigt'].map(s => `<option${s === t.status ? ' selected' : ''}>${s}</option>`).join('')}</select>` : ''}</li>`).join('')}</ul></section>`;
+    return `<section class="card"><h2>Alle Aufgaben</h2><ul class="l">${tasks.map(t => `<li>${esc(t.title)} <span class="badge">${esc(t.status)}</span><br><span class="mute">${esc(mName(t.meeting_id))} · ${esc(t.assignee_name || 'frei')}</span>${t.assignee_id === me.id || me.role === 'admin' ? ` <select data-st="${t.id}" aria-label="Status">${['offen', 'in Bearbeitung', 'erledigt'].map(s => `<option${s === t.status ? ' selected' : ''}>${s}</option>`).join('')}</select>` : ''}${me.role === 'admin' ? ` <button data-tdel="${t.id}">Löschen</button>` : ''}</li>`).join('')}</ul></section>`;
   }
 };
 
@@ -66,6 +67,7 @@ function render() {
   root.innerHTML = `${siteHeader(me, isLit ? '' : v)}<main>${isLit ? '<p>Lade …</p>' : views[v]()}</main>`;
   document.getElementById('out').onclick = async () => { await aw.logout(); location.reload(); };
   if (isLit) renderLiturgy(location.hash.split('/')[1]);
+  else if (me.role === 'admin') adminMount(v);
 }
 const act = async (fn, ok) => { try { await fn(); toast(ok); } catch (e) { toast(String(e.message || e), true); } await refresh(); };
 root.addEventListener('submit', e => {
@@ -98,5 +100,6 @@ window.addEventListener('hashchange', render);
 (async () => {
   me = await requireLogin(root);
   root.innerHTML = '<p class="card">Lade …</p>'; await refresh();
-  setInterval(() => { if (!document.activeElement?.matches('input,textarea,select') && !location.hash.startsWith('#liturgie/')) refresh(); }, 30000);
+  if (me.role === 'admin') adminInit();
+  setInterval(() => { if (!document.activeElement?.matches('input,textarea,select') && !document.querySelector('#mf, #cf') && !location.hash.startsWith('#liturgie/')) refresh(); }, 30000);
 })();
