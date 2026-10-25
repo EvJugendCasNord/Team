@@ -32,24 +32,23 @@ const views = {
     const next = upcoming()[0], open = tasks.filter(t => t.status !== 'erledigt');
     const dl = open.filter(t => t.due_date).sort(byStr('due_date')).slice(0, 6);
     return `<div class="grid">
-    <section class="card"><h2>Nächster Termin</h2>${next ? `<b>${esc(next.title)}</b><br>${fmt(next.starts_at)} <span class="badge">${esc(next.kind || 'Meeting')}</span><br><span class="mute">${esc(next.location || 'Ort noch offen')}</span>` : '<p class="mute">Noch kein Termin geplant.</p>'}</section>
+    <section class="card"><h2>Nächster Termin</h2>${next ? `<b>${esc(next.title)}</b><br>${fmt(next.starts_at)}${next.leaders ? `<br><span class="mute">Prediger: ${esc(next.leaders)}</span>` : ''}` : '<p class="mute">Noch kein Termin geplant.</p>'}</section>
     <section class="card"><h2>Offene Aufgaben</h2><ul class="l">${open.slice(0, 8).map(t => `<li>${esc(t.title)} <span class="badge">${esc(t.status)}</span><br><span class="mute">${esc(mName(t.meeting_id))} · ${t.assignee_name ? esc(t.assignee_name) : 'noch frei'}${t.due_date ? ' · bis ' + fmtDay(t.due_date) : ''}</span></li>`).join('') || '<li class="mute">Alles erledigt.</li>'}</ul></section>
     <section class="card"><h2>Meeting</h2><ul class="l">${upcoming().slice(0, 5).map(m => `<li><a href="#meetings">${esc(m.title)}</a><br><span class="mute">${fmt(m.starts_at)}</span></li>`).join('') || '<li class="mute">Keine Meetings.</li>'}</ul><p><a href="#meetings">Zum Meeting</a></p></section>
     <section class="card"><h2>Anstehende Deadlines</h2><ul class="l">${dl.map(t => `<li>${fmtDay(t.due_date)}: ${esc(t.title)}<br><span class="mute">${esc(mName(t.meeting_id))}</span></li>`).join('') || '<li class="mute">Keine Fristen.</li>'}</ul></section></div>`;
   },
   meetings() {
     return upcoming().map(m => { const lit = lits.find(l => l.meeting_id === m.id);
-      return `<article class="card"><h2>${esc(m.title)}</h2><p class="mute">${fmt(m.starts_at)} · ${esc(m.location || 'Ort offen')}</p>${m.leaders ? `<p><b>Leitung:</b> ${esc(m.leaders)}</p>` : ''}${lit ? `<p><a href="#liturgie/${lit.id}"><b>Liturgie ansehen</b></a></p>` : ''}${m.description ? `<p>${esc(m.description)}</p>` : ''}${m.notes ? `<p class="mute">${esc(m.notes)}</p>` : ''}${tasks.filter(t => t.meeting_id === m.id).map(slotHtml).join('')}</article>`; }).join('') || '<p class="card mute">Noch keine Meetings. Ein Admin kann sie unter „Admin“ anlegen.</p>';
+      return `<article class="card"><h2>${esc(m.title)}</h2><p class="mute">${fmt(m.starts_at)}</p>${m.leaders ? `<p><b>Prediger:</b> ${esc(m.leaders)}</p>` : ''}${lit ? `<p><a href="#liturgie/${lit.id}"><b>Liturgie ansehen</b></a></p>` : ''}${m.description ? `<p>${esc(m.description)}</p>` : ''}${m.notes ? `<p class="mute">${esc(m.notes)}</p>` : ''}${tasks.filter(t => t.meeting_id === m.id).map(slotHtml).join('')}</article>`; }).join('') || '<p class="card mute">Noch keine Meetings. Ein Admin kann sie unter „Admin“ anlegen.</p>';
   },
   kalender() {
     const by = {}; meetings.forEach(m => (by[m.starts_at.slice(0, 7)] ??= []).push(m));
-    return Object.keys(by).sort().map(k => `<section class="card"><h2>${new Date(k + '-01').toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</h2><ul class="l">${by[k].map(m => `<li><b>${fmt(m.starts_at)}</b> – <a href="#meetings">${esc(m.title)}</a> <span class="badge">${esc(m.kind || 'Meeting')}</span></li>`).join('')}</ul></section>`).join('') || '<p class="card mute">Keine Termine.</p>';
+    return Object.keys(by).sort().map(k => `<section class="card"><h2>${new Date(k + '-01').toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</h2><ul class="l">${by[k].map(m => `<li><b>${fmt(m.starts_at)}</b> – <a href="#meetings">${esc(m.title)}</a>${m.leaders ? ` <span class="mute">(${esc(m.leaders)})</span>` : ''}</li>`).join('')}</ul></section>`).join('') || '<p class="card mute">Keine Termine.</p>';
   },
   aufgaben() {
     return `<section class="card"><h2>Alle Aufgaben</h2><ul class="l">${tasks.map(t => `<li>${esc(t.title)} <span class="badge">${esc(t.status)}</span><br><span class="mute">${esc(mName(t.meeting_id))} · ${esc(t.assignee_name || 'frei')}</span>${t.assignee_id === me.id || me.role === 'admin' ? ` <select data-st="${t.id}" aria-label="Status">${['offen', 'in Bearbeitung', 'erledigt'].map(s => `<option${s === t.status ? ' selected' : ''}>${s}</option>`).join('')}</select>` : ''}</li>`).join('')}</ul></section>`;
   }
 };
-const tabs = [['dashboard', 'Dashboard'], ['meetings', 'Meeting'], ['kalender', 'Kalender'], ['aufgaben', 'Aufgaben'], ['predigten', 'Predigten'], ['fuerbitten', 'Fürbitten'], ['spiele', 'Spiele'], ['downloads', 'Downloads']];
 
 async function renderLiturgy(id) {
   let L, items;
@@ -64,7 +63,7 @@ async function renderLiturgy(id) {
 function render() {
   const isLit = location.hash.startsWith('#liturgie/');
   const v = location.hash.slice(1) in views ? location.hash.slice(1) : 'dashboard';
-  root.innerHTML = `<header><span class="logo" role="img" aria-label="Logo"></span><b>Ev. Jugend Castrop-Rauxel-Nord</b><nav aria-label="Hauptmenü">${tabs.map(([k, l]) => `<a href="#${k}"${k === v && !isLit ? ' aria-current="page"' : ''}>${l}</a>`).join('')}${me.role === 'admin' ? '<a href="./admin.html">Admin</a>' : ''}</nav><span style="flex:1"></span><span class="mute">${esc(me.display_name)}</span><button id="out">Abmelden</button></header><main>${isLit ? '<p>Lade …</p>' : views[v]()}</main>`;
+  root.innerHTML = `${siteHeader(me, isLit ? '' : v)}<main>${isLit ? '<p>Lade …</p>' : views[v]()}</main>`;
   document.getElementById('out').onclick = async () => { await aw.logout(); location.reload(); };
   if (isLit) renderLiturgy(location.hash.split('/')[1]);
 }

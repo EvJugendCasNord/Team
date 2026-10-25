@@ -111,3 +111,9 @@ async function requireLogin(box) {
     draw(); window.__bootDone = true;
   });
 }
+
+// Gemeinsamer Kopfbereich für Hauptseite und Admin-Seite. prefix = '' auf der Hauptseite, './index.html' auf der Admin-Seite.
+const tabs = [['dashboard', 'Dashboard'], ['meetings', 'Meeting'], ['kalender', 'Kalender'], ['aufgaben', 'Aufgaben'], ['predigten', 'Predigten'], ['fuerbitten', 'Fürbitten'], ['spiele', 'Spiele'], ['downloads', 'Downloads']];
+function siteHeader(me, active, prefix = '') {
+  return `<header><span class="logo" role="img" aria-label="Logo"></span><b>Ev. Jugend Castrop-Rauxel-Nord</b><nav aria-label="Hauptmenü">${tabs.map(([k, l]) => `<a href="${prefix}#${k}"${k === active ? ' aria-current="page"' : ''}>${l}</a>`).join('')}${me.role === 'admin' ? `<a href="./admin.html"${active === 'admin' ? ' aria-current="page"' : ''}>Admin</a>` : ''}</nav><span style="flex:1"></span><span class="mute">${esc(me.display_name)}</span><button id="out">Abmelden</button></header>`;
+}

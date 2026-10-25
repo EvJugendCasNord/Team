@@ -10,26 +10,26 @@
 })();
 </script></head>
 <body><div id="app"><div id="boot"><p>Lade …</p></div></div><div id="toast" role="status" aria-live="polite"></div>
-<script src="./src/config.js"></script><script src="./src/lib.js"></script><script src="./src/seed.js"></script><script src="./src/liturgy-admin.js"></script><script src="./src/cms-admin.js"></script>
+<script src="./src/config.js"></script><script src="./src/lib.js"></script><script src="./src/seed.js"></script><script src="./src/cms-admin.js"></script>
 <script>
 (async function () {
   const root = document.getElementById('app'); const me = await requireLogin(root);
-  if (me.role !== 'admin') { root.innerHTML = '<main><p class="card">Dieser Bereich ist nur für Administratoren. <a href="./index.html">Zurück</a></p></main>'; return; }
-  root.innerHTML = `<header><span class="logo" role="img" aria-label="Logo"></span><b>Admin</b><a href="./index.html">← Zur Jugendseite</a></header><main><form id="f" class="card"><h2>Neues Meeting</h2>
+  if (me.role !== 'admin') { root.innerHTML = siteHeader(me, '', './index.html') + '<main><p class="card">Dieser Bereich ist nur für Administratoren. <a href="./index.html">Zurück</a></p></main>'; document.getElementById('out').onclick = async () => { await aw.logout(); location.reload(); }; return; }
+  root.innerHTML = `${siteHeader(me, 'admin', './index.html')}<main><form id="f" class="card"><h2>Neues Meeting</h2>
   <label>Titel<input name="title" required></label><label>Datum und Uhrzeit<input name="at" type="datetime-local" required></label>
-  <label>Prediger (Namen, z. B. „Anna, Ben“)<input name="leaders"></label><label>Ort<input name="loc"></label>
-  <label>Art<select name="kind"><option>Meeting</option><option>Jugendgottesdienst</option><option>Veranstaltung</option></select></label>
+  <label>Prediger<input name="preacher"></label>
   <label>Beschreibung<textarea name="desc" rows="3"></textarea></label>
   <label>Aufgaben (eine pro Zeile)<textarea name="tasks" rows="8">Begrüßung\nGebet\nBibellesung\nPredigt\nFürbitten\nTechnik\nAufbau\nAbbau</textarea></label>
-  <button class="primary">Meeting speichern</button></form><div id="lit"></div><div id="cms"></div></main>`;
+  <button class="primary">Meeting speichern</button></form><div id="cms"></div></main>`;
+  document.getElementById('out').onclick = async () => { await aw.logout(); location.reload(); };
   document.getElementById('f').onsubmit = async e => {
     e.preventDefault(); const f = new FormData(e.target);
     try {
-      const m = await dbCreate(C_CONTENT, 'meeting', { title: f.get('title'), starts_at: new Date(f.get('at')).toISOString(), location: f.get('loc') || null, leaders: f.get('leaders') || null, kind: f.get('kind'), description: f.get('desc') || null });
+      const m = await dbCreate(C_CONTENT, 'meeting', { title: f.get('title'), starts_at: new Date(f.get('at')).toISOString(), leaders: f.get('preacher') || null, description: f.get('desc') || null });
       for (const title of f.get('tasks').split('\n').map(s => s.trim()).filter(Boolean)) await dbCreate(C_TASKS, 'task', { meeting_id: m.$id, title, status: 'offen', due_date: null, assignee_id: null, assignee_name: null });
     } catch (ex) { return toast('Speichern fehlgeschlagen: ' + ex.message, true); }
     toast('Meeting gespeichert.'); e.target.reset();
   };
-  initLit(document.getElementById('lit')); initCms(document.getElementById('cms'));
+  initCms(document.getElementById('cms'));
 })();
 </script></body></html>
