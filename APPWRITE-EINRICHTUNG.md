@@ -14,7 +14,7 @@ Du musst in Appwrite **nichts von Hand anlegen** – keine Datenbank, keine Tabe
 - In `setup.html` den Secret einfügen → **Einrichtung starten**. Am Ende steht „FERTIG“.
 - Falls dort ein gelber Hinweis zu `DB_ID` steht: genau das in `src/config.js` ändern und neu hochladen.
 
-**5. Dich zum Admin machen:** Auf der Hauptseite ein Konto anlegen (Name + Passwort, ggf. Zugangscode 1968). Dann in `setup.html` → **Konten verwalten** → bei deinem Namen auf **Admin** klicken.
+**5. Dich zum Admin machen:** Auf der Hauptseite ein Konto anlegen (Name + Passwort). Dann in `setup.html` → **Konten verwalten** → bei deinem Namen auf **Admin** klicken.
 Danach den API-Schlüssel in Appwrite **löschen** (und `setup.html` aus dem Repository).
 
 Fertig! Alle anderen Personen legen sich einfach selbst ein Konto an (Name + Passwort). Die Anmeldung bleibt auf dem Gerät gespeichert.

@@ -26,3 +26,23 @@ button{font:inherit;border-radius:8px;border:1px solid var(--line);background:va
 .bar{display:flex;gap:.6rem;flex-wrap:wrap;margin:.5rem 0 1rem}.bar input{flex:2 1 220px}.bar select{flex:1 1 180px}
 .chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:.5rem 0 1rem}.chips button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .fi summary .badge{margin-left:.4rem}.facts{display:grid;gap:.4rem}ol li{margin:.5rem 0}
+
+/* Handy-Ansicht: kompakter Kopf, Menü als wischbare Leiste */
+@media (max-width:700px){
+  body{font-size:16px}
+  header{display:grid;grid-template-columns:auto 1fr auto;gap:.35rem .6rem;align-items:center;padding:.6rem .8rem .2rem}
+  header .logo{height:30px;width:32.6px}
+  header b{font-size:.95rem;line-height:1.2}
+  header>span[style]{display:none}
+  header>.mute{display:none}
+  header #out{grid-column:3;grid-row:1;min-height:38px;padding:.3rem .75rem;font-size:.9rem}
+  header nav{order:5;grid-column:1/-1;flex-wrap:nowrap;overflow-x:auto;gap:.35rem;margin:0 -.8rem;padding:.35rem .8rem .55rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  header nav::-webkit-scrollbar{display:none}
+  header nav a{white-space:nowrap;padding:.5rem .85rem;border:1px solid var(--line);flex:0 0 auto}
+  header>.badge{order:6;grid-column:1/-1;justify-self:start;margin-bottom:.4rem}
+  main{padding:.8rem}
+  .card{padding:.85rem .95rem}
+  h2{font-size:1.15rem}
+  input,textarea,select{font-size:16px}
+  .slot>b{flex:1 1 100%}
+}

@@ -67,6 +67,7 @@ function render() {
   const v = location.hash.slice(1) in views ? location.hash.slice(1) : 'dashboard';
   root.innerHTML = `${siteHeader(me, isLit ? '' : v, '', editMode)}<main>${isLit ? '<p>Lade …</p>' : views[v]()}</main>`;
   document.getElementById('out').onclick = async () => { await aw.logout(); location.reload(); };
+  { const nv = document.querySelector('header nav'), ac = nv && nv.querySelector('[aria-current]'); if (ac) nv.scrollLeft = ac.offsetLeft - (nv.clientWidth - ac.offsetWidth) / 2; }
   if (isLit) renderLiturgy(location.hash.split('/')[1]);
   else if (editMode) adminMount(v);
 }

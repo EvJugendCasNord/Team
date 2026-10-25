@@ -2,7 +2,7 @@ const uniq = (a, k) => [...new Set(a.map(x => x[k]).filter(Boolean))].sort((x, y
 const bar = (list, k, ph, all) => `<div class="bar"><input data-q type="search" placeholder="${ph}" aria-label="${ph}"><select aria-label="Filtern"><option value="">${all}</option>${uniq(list, k).map(x => `<option>${esc(x)}</option>`).join('')}</select></div>`;
 const fi = (txt, topic) => `class="card fi" data-s="${esc(txt.toLowerCase())}" data-t="${esc(topic || '')}"`;
 const none = t => `<p class="card mute">${t}</p>`;
-const hint = 'Noch nichts vorhanden. Ein Admin kann Inhalte unter Admin → „Inhalte verwalten“ anlegen.';
+const hint = 'Noch nichts vorhanden. Ein Admin kann Inhalte über den Menüpunkt „Admin“ anlegen.';
 
 function viewPredigten(S) {
   return `<details class="card" open><summary><h2>Was ist eine Predigt?</h2></summary><p>In einer Predigt wird ein Bibeltext erklärt und mit dem Leben der Zuhörenden verbunden. Im Jugendgottesdienst heißt sie oft „Input“ und dauert 5 bis 10 Minuten. Sie soll nicht belehren, sondern zum Nachdenken einladen, und sie darf ruhig persönlich sein.</p></details>

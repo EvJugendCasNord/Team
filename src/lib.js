@@ -70,22 +70,7 @@ function friendly(e) {
   if (/password/i.test(m)) return 'Das Passwort muss mindestens 8 Zeichen lang sein.';
   return m;
 }
-function gate(box) {
-  return new Promise(res => {
-    if (!ZUGANGSCODE) return res();
-    const ok = () => { try { return localStorage.getItem('zugang_ok') === ZUGANGSCODE; } catch (e) { return window.__zugang === true; } };
-    if (ok()) return res();
-    box.innerHTML = `<form id="g" class="card login"><span class="logo" role="img" aria-label="Logo"></span><h1>Evangelische Jugend<br>Castrop-Rauxel-Nord</h1><label>Zugangscode<input name="c" required inputmode="numeric" autocomplete="off" autofocus></label><button class="primary">Weiter</button><p id="err" class="err" role="alert"></p></form>`;
-    box.querySelector('#g').onsubmit = e => {
-      e.preventDefault();
-      if (String(new FormData(e.target).get('c')).trim() === ZUGANGSCODE) { try { localStorage.setItem('zugang_ok', ZUGANGSCODE); } catch (x) {} window.__zugang = true; res(); }
-      else box.querySelector('#err').textContent = 'Der Zugangscode ist falsch.';
-    };
-    window.__bootDone = true;
-  });
-}
 async function requireLogin(box) {
-  await gate(box);
   let u = null;
   try { u = await currentUser(); } catch (e) { box.innerHTML = `<div class="card login"><h1>Keine Verbindung</h1><p class="err">${esc(e.message)}</p></div>`; window.__bootDone = true; return new Promise(() => {}); }
   if (u) { window.__bootDone = true; return u; }

@@ -20,6 +20,6 @@ Es gibt zwei Seiten mit dem gleichen Aufbau und der gleichen Menüleiste:
 In der Bearbeitungsansicht: Reiter **Meeting** und **Kalender** haben „+ Neues Meeting“ sowie bei jedem Meeting **Bearbeiten** und **Löschen**. Vergangene Meetings stehen ganz unten im Reiter Meeting. Reiter **Aufgaben**: **Löschen**. Reiter **Predigten, Fürbitten, Spiele, Downloads**: unten Bereich zum Anlegen, Ändern, Löschen.
 
 ## Sicherheit (bitte lesen)
-- Wer ein Konto anlegt, sieht sofort alles. Es gibt keine Freischaltung mehr. Schutz davor bietet nur der Zugangscode (`ZUGANGSCODE` in `src/config.js`, Standard 1968). Er steht im Seitenquelltext und ist ein Sichtschutz, kein echter Schutz. Gib die Adresse nur ans Team weiter und ändere den Code gelegentlich.
+- Es gibt keinen Zugangscode und keine Freischaltung: Wer die Adresse kennt, kann sich ein Konto anlegen und sieht dann alles. Gib die Adresse nur ans Team weiter.
 - Aufgaben-Eintragungen: Dass nur die eigene Eintragung geändert wird, prüft die Seite, nicht der Server.
 - Personenbezogene Daten: Name, Eintragungen. Datenschutz mit der Gemeinde klären; keine DSGVO-Konformität zugesichert.
