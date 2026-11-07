@@ -1,6 +1,6 @@
 let editMode = false; // true nur auf der Admin-Seite (admin.html)
 const root = document.getElementById('app');
-let me, meetings = [], tasks = [], lits = [], sermons = [], inter = [], games = [], dcats = [], dls = [];
+let me, members = [], meetings = [], tasks = [], lits = [], sermons = [], inter = [], games = [], dcats = [], dls = [];
 const mName = id => meetings.find(m => m.id === id)?.title ?? '–';
 const byStr = k => (a, b) => String(a[k] ?? '').localeCompare(String(b[k] ?? ''), 'de');
 
@@ -8,8 +8,10 @@ async function load() {
   try {
     const [m, t, li, s, iv, g, dc, d] = await Promise.all([dbList(C_CONTENT, 'meeting'), dbList(C_TASKS, 'task'), dbList(C_CONTENT, 'liturgy'), dbList(C_CONTENT, 'sermon_idea'), dbList(C_CONTENT, 'intercession'), dbList(C_CONTENT, 'game'), dbList(C_CONTENT, 'dl_category'), dbList(C_CONTENT, 'download')]);
     meetings = m.sort(byStr('starts_at')); tasks = t.sort(byStr('_created')); lits = li.filter(l => !l.is_template);
-    sermons = s.sort(byStr('topic')); inter = iv.sort(byStr('topic')); games = g.sort(byStr('name')); dcats = dc.sort(byStr('name'));
+    sermons = s.sort(byStr('topic')); inter = iv.sort(byStr('topic')); games = g.sort(byStr('name')); dcats = dlSort(dc);
+    if (editMode) { try { dcats = dlSort(await ensureDlCats(dcats)); } catch (e) {} }
     dls = d.sort((a, b) => String(b.event_date || b._created).localeCompare(String(a.event_date || a._created)));
+    members = editMode ? await dbList(C_MEMBERS, 'member').catch(() => null) : [];
     return true;
   } catch (e) { toast('Daten konnten nicht geladen werden: ' + e.message, true); return false; }
 }
@@ -29,6 +31,12 @@ const views = {
   fuerbitten: () => viewFuerbitten(inter),
   spiele: () => viewSpiele(games),
   downloads: () => viewDownloads(dls, dcats),
+  mitglieder() {
+    if (!editMode) return none('Nur in der Admin-Ansicht.');
+    if (members === null) return '<p class="card">Die Mitgliederliste ist noch nicht eingerichtet. Öffne <b>setup.html</b>, füge einen API-Schlüssel ein und klicke einmal auf „Einrichtung starten“.</p>';
+    const L = [...members].sort(byStr('name'));
+    return `<section class="card"><h2>Angemeldete Mitglieder (${L.length})</h2><ul class="l">${L.map(x => `<li><b>${esc(x.name)}</b>${x.id === me.id ? ' (du)' : ''} <span class="mute">seit ${new Date(x.joined).toLocaleDateString('de-DE')}</span></li>`).join('') || '<li class="mute">Noch niemand.</li>'}</ul><p class="mute">Neue Mitglieder erscheinen hier automatisch, sobald sie sich zum ersten Mal anmelden. Schon vorhandene Konten erscheinen, sobald sie die Seite das nächste Mal öffnen. Alle Konten siehst du außerdem in Appwrite unter Auth → Users.</p></section>`;
+  },
   dashboard() {
     const next = upcoming()[0], open = tasks.filter(t => t.status !== 'erledigt');
     const dl = open.filter(t => t.due_date).sort(byStr('due_date')).slice(0, 6);
@@ -101,6 +109,7 @@ async function refresh() { if (await load()) render(); }
 window.addEventListener('hashchange', render);
 (async () => {
   me = await requireLogin(root);
+  registerMember(me).catch(() => {});
   if (window.ADMIN_MODE === true) {
     if (me.role !== 'admin') { root.innerHTML = siteHeader(me, '') + '<main><p class="card">Dieser Bereich ist nur für Administratoren. <a href="./index.html">Zur normalen Seite</a></p></main>'; document.getElementById('out').onclick = async () => { await aw.logout(); location.reload(); }; return; }
     editMode = true;

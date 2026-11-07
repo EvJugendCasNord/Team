@@ -25,7 +25,8 @@ if (!cfgOk()) status('✘ Die Datei src/config.js wurde nicht gefunden. Vermutli
 else status('✔ Seite geladen (Version 2). Adresse: ' + location.hostname + (location.protocol === 'file:' ? ' – ACHTUNG: per Doppelklick geöffnet, das geht nicht. Nimm die GitHub-Pages-Adresse.' : ''));
 const PERMS = {
   content: ['read("users")', 'create("label:admin")', 'update("label:admin")', 'delete("label:admin")'],
-  tasks: ['read("users")', 'update("users")', 'create("label:admin")', 'update("label:admin")', 'delete("label:admin")']
+  tasks: ['read("users")', 'update("users")', 'create("label:admin")', 'update("label:admin")', 'delete("label:admin")'],
+  members: ['read("users")', 'create("users")', 'update("label:admin")', 'delete("label:admin")']
 };
 let DB;
 async function api(method, path, body) {

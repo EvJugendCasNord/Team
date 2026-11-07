@@ -100,5 +100,15 @@ async function requireLogin(box) {
 // Gemeinsamer Kopfbereich für Hauptseite und Admin-Seite. prefix = '' auf der Hauptseite, './index.html' auf der Admin-Seite.
 const tabs = [['dashboard', 'Dashboard'], ['meetings', 'Meeting'], ['kalender', 'Kalender'], ['aufgaben', 'Aufgaben'], ['predigten', 'Predigten'], ['fuerbitten', 'Fürbitten'], ['spiele', 'Spiele'], ['downloads', 'Downloads']];
 function siteHeader(me, active, prefix = '', editMode = false) {
-  return `<header><span class="logo" role="img" aria-label="Logo"></span><b>Ev. Jugend Castrop-Rauxel-Nord</b><nav aria-label="Hauptmenü">${tabs.map(([k, l]) => `<a href="${prefix}#${k}"${k === active ? ' aria-current="page"' : ''}>${l}</a>`).join('')}${me.role === 'admin' ? (editMode ? '<a href="./index.html">← Normale Ansicht</a>' : '<a href="./admin.html">Admin</a>') : ''}</nav><span style="flex:1"></span>${editMode ? '<span class="badge">Bearbeitungsansicht</span>' : ''}<span class="mute">${esc(me.display_name)}</span><button id="out">Abmelden</button></header>`;
+  const T = editMode ? [...tabs, ['mitglieder', 'Mitglieder']] : tabs;
+  return `<header><span class="logo" role="img" aria-label="Logo"></span><b>Ev. Jugend Castrop-Rauxel-Nord</b><nav aria-label="Hauptmenü">${T.map(([k, l]) => `<a href="${prefix}#${k}"${k === active ? ' aria-current="page"' : ''}>${l}</a>`).join('')}${me.role === 'admin' ? (editMode ? '<a href="./index.html">← Normale Ansicht</a>' : '<a href="./admin.html">Admin</a>') : ''}</nav><span style="flex:1"></span>${editMode ? '<span class="badge">Bearbeitungsansicht</span>' : ''}<span class="mute">${esc(me.display_name)}</span><button id="out">Abmelden</button></header>`;
+}
+
+// Trägt jedes Konto einmal in die Mitgliederliste ein (Anzeige im Admin-Bereich). Fehler sind hier egal.
+async function registerMember(me) {
+  const k = 'member_ok_' + me.id;
+  try { if (localStorage.getItem(k)) return; } catch (e) {}
+  try { await aw.createRow(C_MEMBERS, me.id, { rtype: 'member', data: JSON.stringify({ name: me.display_name, joined: new Date().toISOString() }) }); }
+  catch (e) { if (e.status !== 409) return; }
+  try { localStorage.setItem(k, '1'); } catch (e) {}
 }

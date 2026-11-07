@@ -34,3 +34,14 @@ function viewDownloads(D, C) {
   const name = id => C.find(c => c.id === id)?.name || '';
   return `<section data-filter><h2>Downloads</h2>${C.length ? `<div class="chips" role="group" aria-label="Reiter"><button data-chip="" aria-pressed="true">Alle</button>${C.map(c => `<button data-chip="${esc(c.name)}" aria-pressed="false">${esc(c.name)}</button>`).join('')}</div>` : ''}${D.map(x => `<article ${fi([x.title, x.description].join(' '), name(x.category_id))}><b>${esc(x.title)}</b> ${name(x.category_id) ? `<span class="badge">${esc(name(x.category_id))}</span>` : ''}<div class="mute">${x.event_date ? fmtDay(x.event_date) : ''}</div>${x.description ? `<div class="body">${esc(x.description)}</div>` : ''}<p><button class="primary" data-dl="${esc(x.file_id)}" data-name="${esc(x.file_name || '')}">Herunterladen</button></p></article>`).join('') || none(hint)}</section>`;
 }
+
+// Feste Download-Kategorien in dieser Reihenfolge; eigene Kategorien aus früheren Versionen kommen danach.
+const DL_FIXED = ['Flyer', 'Blogtag', 'Konfifahrt', 'Andere Dokumente'];
+const dlRank = c => { const i = DL_FIXED.findIndex(n => n.toLowerCase() === String(c.name || '').trim().toLowerCase()); return i < 0 ? 99 : i; };
+const dlSort = list => [...list].sort((a, b) => dlRank(a) - dlRank(b) || String(a.name || '').localeCompare(String(b.name || ''), 'de'));
+// Legt fehlende feste Kategorien an (nur für Admins aufgerufen) und gibt die vollständige Liste zurück.
+async function ensureDlCats(list) {
+  const out = [...list];
+  for (const n of DL_FIXED) if (!out.some(c => String(c.name || '').trim().toLowerCase() === n.toLowerCase())) { const r = await dbCreate(C_CONTENT, 'dl_category', { name: n }); out.push({ name: n, id: r.$id }); }
+  return out;
+}

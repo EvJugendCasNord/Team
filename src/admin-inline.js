@@ -24,7 +24,7 @@ function adminPastMeetings() {
 
 // Hängt unter Predigten, Fürbitten, Spiele und Downloads den Bearbeiten-Bereich ein.
 function adminMount(tab) {
-  const keys = { predigten: ['sermon_idea'], fuerbitten: ['intercession'], spiele: ['game'], downloads: ['download', 'dl_category'] }[tab];
+  const keys = { predigten: ['sermon_idea'], fuerbitten: ['intercession'], spiele: ['game'], downloads: ['download'] }[tab];
   if (!keys) return;
   const box = document.createElement('div'); box.id = 'cms';
   document.querySelector('main').appendChild(box);

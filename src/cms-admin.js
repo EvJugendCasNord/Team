@@ -1,5 +1,5 @@
 const TYPES = {
-  download: { label: 'Downloads (Flyer, Dokumente)', title: 'title', f: [{ k: 'category_id', l: 'Reiter', t: 'ref' }, { k: 'title', l: 'Titel', r: 1 }, { k: 'event_date', l: 'Datum', t: 'date' }, { k: 'description', l: 'Beschreibung', t: 'area' }, { k: 'file', l: 'Datei', t: 'file' }] },
+  download: { label: 'Downloads', title: 'title', f: [{ k: 'category_id', l: 'Kategorie', t: 'ref', r: 1 }, { k: 'title', l: 'Titel', r: 1 }, { k: 'event_date', l: 'Datum', t: 'date' }, { k: 'description', l: 'Beschreibung', t: 'area' }, { k: 'file', l: 'Datei', t: 'file' }] },
   dl_category: { label: 'Download-Reiter (z. B. Flyer)', title: 'name', f: [{ k: 'name', l: 'Name des Reiters', r: 1 }] },
   sermon_idea: { label: 'Predigtideen', title: 'title', f: [{ k: 'topic', l: 'Thema', r: 1 }, { k: 'title', l: 'Titel', r: 1 }, { k: 'bible_ref', l: 'Bibelstelle' }, { k: 'body', l: 'Idee / Text', t: 'area' }] },
   intercession: { label: 'Fürbitten', title: 'title', f: [{ k: 'topic', l: 'Thema', r: 1 }, { k: 'title', l: 'Titel', r: 1 }, { k: 'body', l: 'Text', t: 'area', r: 1 }] },
@@ -9,13 +9,13 @@ async function initCms(box, keys = Object.keys(TYPES), onDone = () => {}) {
   let key = keys[0], rows = [], cats = [], edit = null;
   const T = () => TYPES[key];
   async function load() {
-    try { rows = await dbList(C_CONTENT, key); cats = await dbList(C_CONTENT, 'dl_category'); }
+    try { rows = await dbList(C_CONTENT, key); cats = dlSort(await dbList(C_CONTENT, 'dl_category')); }
     catch (e) { toast('Laden fehlgeschlagen: ' + e.message, true); rows = []; }
   }
   const fld = (f, v) => {
     const r = f.r ? 'required' : '', val = esc(v ?? '');
     if (f.t === 'area') return `<label>${f.l}<textarea data-k="${f.k}" rows="6" ${r}>${val}</textarea></label>`;
-    if (f.t === 'ref') return `<label>${f.l}<select data-k="${f.k}"><option value="">– kein Reiter –</option>${cats.map(c => `<option value="${c.id}"${c.id === v ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>`;
+    if (f.t === 'ref') return `<label>${f.l}<select data-k="${f.k}"${f.r ? ' required' : ''}><option value="">– bitte wählen –</option>${cats.map(c => `<option value="${c.id}"${c.id === v ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>`;
     if (f.t === 'file') return `<label>${f.l}<input type="file" id="file" ${edit.id ? '' : 'required'}>${edit.file_name ? `<span class="mute">Aktuell: ${esc(edit.file_name)} (leer lassen = behalten)</span>` : ''}</label>`;
     return `<label>${f.l}<input data-k="${f.k}" type="${f.t || 'text'}" value="${val}" ${r}></label>`;
   };
