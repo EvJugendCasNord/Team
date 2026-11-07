@@ -20,7 +20,7 @@ Es gibt zwei Seiten mit dem gleichen Aufbau und der gleichen Menüleiste:
 In der Bearbeitungsansicht: Reiter **Meeting** und **Kalender** haben „+ Neues Meeting“ sowie bei jedem Meeting **Bearbeiten** und **Löschen**. Vergangene Meetings stehen ganz unten im Reiter Meeting. Reiter **Aufgaben**: **Löschen**. Reiter **Predigten, Fürbitten, Spiele, Downloads**: unten Bereich zum Anlegen, Ändern, Löschen.
 
 ## Downloads
-Der Bereich hat feste Kategorien: **Flyer, Blogtag, Konfifahrt, Andere Dokumente**. Sie werden automatisch angelegt, sobald ein Admin die Admin-Ansicht öffnet. Beim Hochladen wählt man eine Kategorie aus.
+Der Bereich hat feste Kategorien: **Flyer, Blocktag, Konfifahrt, Andere Dokumente**. Sie werden automatisch angelegt, sobald ein Admin die Admin-Ansicht öffnet. Beim Hochladen wählt man eine Kategorie aus.
 
 ## Mitgliederliste
 In der Bearbeitungsansicht gibt es den Reiter **Mitglieder**. Jedes Konto trägt sich beim ersten Öffnen der Seite selbst ein. Konten, die es schon vor dieser Funktion gab, erscheinen, sobald die Person die Seite das nächste Mal öffnet. Dafür muss `setup.html` einmal erneut ausgeführt werden (legt die Tabelle `members` an). Alle Konten siehst du außerdem in Appwrite unter Auth → Users.

@@ -36,12 +36,15 @@ function viewDownloads(D, C) {
 }
 
 // Feste Download-Kategorien in dieser Reihenfolge; eigene Kategorien aus früheren Versionen kommen danach.
-const DL_FIXED = ['Flyer', 'Blogtag', 'Konfifahrt', 'Andere Dokumente'];
-const dlRank = c => { const i = DL_FIXED.findIndex(n => n.toLowerCase() === String(c.name || '').trim().toLowerCase()); return i < 0 ? 99 : i; };
+const DL_FIXED = ['Flyer', 'Blocktag', 'Konfifahrt', 'Andere Dokumente'];
+const dlRank = c => { const nm = String(c.name || '').trim().toLowerCase(), i = DL_FIXED.findIndex(n => n.toLowerCase() === (nm === 'blogtag' ? 'blocktag' : nm)); return i < 0 ? 99 : i; };
 const dlSort = list => [...list].sort((a, b) => dlRank(a) - dlRank(b) || String(a.name || '').localeCompare(String(b.name || ''), 'de'));
 // Legt fehlende feste Kategorien an (nur für Admins aufgerufen) und gibt die vollständige Liste zurück.
 async function ensureDlCats(list) {
   const out = [...list];
+  // Früher falsch geschrieben („Blogtag“): umbenennen statt doppelt anlegen.
+  const old = out.find(c => String(c.name || '').trim().toLowerCase() === 'blogtag');
+  if (old && !out.some(c => String(c.name || '').trim().toLowerCase() === 'blocktag')) { await dbUpdate(C_CONTENT, old.id, 'dl_category', { name: 'Blocktag' }); old.name = 'Blocktag'; }
   for (const n of DL_FIXED) if (!out.some(c => String(c.name || '').trim().toLowerCase() === n.toLowerCase())) { const r = await dbCreate(C_CONTENT, 'dl_category', { name: n }); out.push({ name: n, id: r.$id }); }
   return out;
 }
