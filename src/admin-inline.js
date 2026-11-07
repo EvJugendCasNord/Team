@@ -51,6 +51,20 @@ function adminInit() {
       } catch (ex) { toast('Löschen fehlgeschlagen: ' + ex.message, true); }
       await refresh(); return;
     }
+    const cd = t.closest('[data-cdel]');
+    if (cd) {
+      const r = [...sermons, ...inter, ...games, ...dls].find(x => x.id === cd.dataset.cdel); if (!r) return;
+      if (!confirm('„' + (r.title || r.name || 'Eintrag') + '“ wirklich löschen? Das kann man nicht rückgängig machen.')) return;
+      try { if (r.file_id) await aw.deleteFile(r.file_id).catch(() => {}); await dbDelete(C_CONTENT, r.id); toast('Gelöscht.'); }
+      catch (ex) { toast('Löschen fehlgeschlagen: ' + ex.message, true); }
+      await refresh(); return;
+    }
+    const ce = t.closest('[data-cedit]');
+    if (ce) {
+      const b = document.querySelector('#cms [data-e="' + ce.dataset.cedit + '"]');
+      if (b) { b.click(); document.getElementById('cms').scrollIntoView(); } else toast('Der Bearbeiten-Bereich lädt noch, bitte gleich nochmal klicken.', true);
+      return;
+    }
     const td = t.closest('[data-tdel]');
     if (td) {
       const x = tasks.find(y => y.id === td.dataset.tdel); if (!x) return;

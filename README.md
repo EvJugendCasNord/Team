@@ -17,7 +17,7 @@ Es gibt zwei Seiten mit dem gleichen Aufbau und der gleichen Menüleiste:
 - `index.html` ist die normale Ansicht für alle (nur Lesen und Eintragen).
 - `admin.html` ist die Bearbeitungsansicht. Admins kommen über den Menüpunkt **Admin** ganz rechts im Menü dorthin. Mitglieder sehen den Punkt nicht und kommen auf `admin.html` nicht weiter.
 
-In der Bearbeitungsansicht: Reiter **Meeting** und **Kalender** haben „+ Neues Meeting“ sowie bei jedem Meeting **Bearbeiten** und **Löschen**. Vergangene Meetings stehen ganz unten im Reiter Meeting. Reiter **Aufgaben**: **Löschen**. Reiter **Predigten, Fürbitten, Spiele, Downloads**: unten Bereich zum Anlegen, Ändern, Löschen.
+In der Bearbeitungsansicht hat auch jeder Eintrag in **Predigten, Fürbitten, Spiele und Downloads** (bei Spielen und Predigten nach dem Aufklappen) die Knöpfe **Bearbeiten** und **Löschen**. Reiter **Meeting** und **Kalender** haben „+ Neues Meeting“ sowie bei jedem Meeting **Bearbeiten** und **Löschen**. Vergangene Meetings stehen ganz unten im Reiter Meeting. Reiter **Aufgaben**: **Löschen**. Reiter **Predigten, Fürbitten, Spiele, Downloads**: unten Bereich zum Anlegen, Ändern, Löschen.
 
 ## Downloads
 Der Bereich hat feste Kategorien: **Flyer, Blocktag, Konfifahrt, Andere Dokumente**. Sie werden automatisch angelegt, sobald ein Admin die Admin-Ansicht öffnet. Beim Hochladen wählt man eine Kategorie aus.
