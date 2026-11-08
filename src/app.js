@@ -17,10 +17,14 @@ async function load() {
 }
 const upcoming = () => meetings.filter(m => new Date(m.starts_at) >= new Date());
 const slotHtml = t => t.assignee_id
-  ? `<div class="slot"><b>${esc(t.title)}</b><span class="taken">${esc(t.assignee_name)}</span>${t.assignee_id === me.id || me.role === 'admin' ? `<button data-rel="${t.id}">Freigeben</button>` : ''}</div>`
-  : `<div class="slot"><b>${esc(t.title)}</b><form class="claim" data-claim="${t.id}"><input name="n" value="${esc(me.display_name)}" maxlength="60" required aria-label="Name für ${esc(t.title)}"><button class="primary">Eintragen</button></form></div>`;
+  ? `<div class="slot"><b>${esc(t.title)}</b><span class="taken">✔ ${esc(t.assignee_name)}</span>${t.assignee_id === me.id || me.role === 'admin' ? `<button data-rel="${t.id}">Freigeben</button>` : ''}</div>`
+  : `<div class="slot"><b>${esc(t.title)}</b><form class="claim" data-claim="${t.id}"><button class="primary">Mich eintragen</button><span class="mute">als ${esc(me.display_name)}</span></form></div>`;
 
 // Änderungen an einer Aufgabe: immer frisch lesen, damit nichts unbemerkt überschrieben wird.
+function taskBlock(mid) {
+  const L = tasks.filter(t => t.meeting_id === mid);
+  return L.map(slotHtml).join('');
+}
 async function changeTask(id, fn) {
   const d = await aw.getRow(C_TASKS, id), o = JSON.parse(d.data);
   fn(o); await dbUpdate(C_TASKS, id, 'task', o);
@@ -49,7 +53,7 @@ const views = {
   meetings() {
     const adm = editMode;
     return (adm ? adminMeetingForm() : '') + (upcoming().map(m => { const lit = lits.find(l => l.meeting_id === m.id);
-      return `<article class="card"><h2>${esc(m.title)}</h2><p class="mute">${fmt(m.starts_at)}</p>${m.leaders ? `<p><b>Prediger:</b> ${esc(m.leaders)}</p>` : ''}${lit ? `<p><a href="#liturgie/${lit.id}"><b>Liturgie ansehen</b></a></p>` : ''}${m.description ? `<p>${esc(m.description)}</p>` : ''}${m.notes ? `<p class="mute">${esc(m.notes)}</p>` : ''}${adm ? `<p class="noprint"><button data-medit="${m.id}">Bearbeiten</button> <button data-mdel="${m.id}">Löschen</button></p>` : ''}${tasks.filter(t => t.meeting_id === m.id).map(slotHtml).join('')}</article>`; }).join('') || `<p class="card mute">Noch keine Meetings.${adm ? '' : ' Ein Admin kann sie anlegen.'}</p>`) + (adm ? adminPastMeetings() : '');
+      return `<article class="card"><h2>${esc(m.title)}</h2><p class="mute">${fmt(m.starts_at)}</p>${m.leaders ? `<p><b>Prediger:</b> ${esc(m.leaders)}</p>` : ''}${lit ? `<p><a href="#liturgie/${lit.id}"><b>Liturgie ansehen</b></a></p>` : ''}${m.description ? `<p>${esc(m.description)}</p>` : ''}${m.notes ? `<p class="mute">${esc(m.notes)}</p>` : ''}${adm ? `<p class="noprint"><button data-medit="${m.id}">Bearbeiten</button> <button data-mdel="${m.id}">Löschen</button></p>` : ''}${taskBlock(m.id)}</article>`; }).join('') || `<p class="card mute">Noch keine Meetings.${adm ? '' : ' Ein Admin kann sie anlegen.'}</p>`) + (adm ? adminPastMeetings() : '');
   },
   kalender() {
     const by = {}; meetings.forEach(m => (by[m.starts_at.slice(0, 7)] ??= []).push(m));
@@ -82,7 +86,7 @@ function render() {
 const act = async (fn, ok) => { try { await fn(); toast(ok); } catch (e) { toast(String(e.message || e), true); } await refresh(); };
 root.addEventListener('submit', e => {
   const id = e.target.dataset.claim; if (!id) return; e.preventDefault();
-  const name = new FormData(e.target).get('n').trim();
+  const name = me.display_name; // man kann sich nur selbst eintragen
   act(() => changeTask(id, o => { if (o.assignee_id) throw new Error('Dieses Feld ist bereits vergeben'); o.assignee_id = me.id; o.assignee_name = name.slice(0, 60); }), 'Gespeichert – du bist eingetragen.');
 });
 root.addEventListener('change', e => {
