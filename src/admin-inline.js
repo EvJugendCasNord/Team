@@ -1,5 +1,5 @@
 // Bearbeiten-Funktionen für Admins: erscheinen direkt in der normalen Seite (nur sichtbar, wenn man Admin ist).
-const adm = { meeting: null };
+const adm = { meeting: null, other: false };
 const DEFAULT_TASKS = 'Begrüßung\nGebet\nBibellesung\nPredigt\nFürbitten\nTechnik\nAufbau\nAbbau';
 const localInput = iso => { const d = new Date(iso), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
 
@@ -14,6 +14,16 @@ function adminMeetingForm() {
     <label>Beschreibung<textarea name="desc" rows="3">${esc(m.description || '')}</textarea></label>
     <label>${isNew ? 'Aufgaben (eine pro Zeile)' : 'Weitere Aufgaben hinzufügen (eine pro Zeile, leer lassen = nichts ändern)'}<textarea name="tasks" rows="${isNew ? 8 : 3}">${isNew ? DEFAULT_TASKS : ''}</textarea></label>
     <button class="primary">Speichern</button> <button type="button" data-mcancel>Abbrechen</button></form>`;
+}
+
+function adminOtherForm() {
+  if (!adm.other) return '<p class="noprint"><button class="primary" data-onew>+ Neue Aufgabe</button></p>';
+  return `<form id="of" class="card"><h2>Neue Aufgabe</h2>
+    <label>Titel (zum Beispiel „Adventsdorf, Tag 1“)<input name="group" required maxlength="80"></label>
+    <label>Schichten oder Punkte (eine pro Zeile)<textarea name="lines" rows="5" required placeholder="Schicht 10:00–12:00 Uhr&#10;Schicht 12:00–14:00 Uhr"></textarea></label>
+    <label>Plätze pro Zeile (wie viele Leute können sich eintragen)<input name="n" type="number" min="1" max="20" value="1" required></label>
+    <p class="mute">Gleicher Titel wie eine vorhandene Aufgabe: Die neuen Zeilen kommen dort dazu.</p>
+    <button class="primary">Speichern</button> <button type="button" data-ocancel>Abbrechen</button></form>`;
 }
 
 function adminPastMeetings() {
@@ -51,6 +61,15 @@ function adminInit() {
       } catch (ex) { toast('Löschen fehlgeschlagen: ' + ex.message, true); }
       await refresh(); return;
     }
+    if (t.closest('[data-onew]')) { adm.other = true; render(); document.getElementById('of')?.scrollIntoView(); return; }
+    if (t.closest('[data-ocancel]')) { adm.other = false; render(); return; }
+    const gd = t.closest('[data-gdel]');
+    if (gd) {
+      const g = decodeURIComponent(gd.dataset.gdel), L = tasks.filter(x => !x.meeting_id && (x.group || 'Sonstiges') === g);
+      if (!confirm('Aufgabe „' + g + '“ mit allen ' + L.length + ' Plätzen wirklich löschen? Das kann man nicht rückgängig machen.')) return;
+      try { for (const x of L) await dbDelete(C_TASKS, x.id); toast('Aufgabe gelöscht.'); } catch (ex) { toast('Löschen fehlgeschlagen: ' + ex.message, true); }
+      await refresh(); return;
+    }
     const cd = t.closest('[data-cdel]');
     if (cd) {
       const r = [...sermons, ...inter, ...games, ...dls].find(x => x.id === cd.dataset.cdel); if (!r) return;
@@ -74,6 +93,14 @@ function adminInit() {
     }
   });
   root.addEventListener('submit', async e => {
+    if (e.target.id === 'of') {
+      e.preventDefault(); const f = new FormData(e.target), group = String(f.get('group')).trim(), n = Math.max(1, Math.min(20, parseInt(f.get('n'), 10) || 1));
+      const lines = String(f.get('lines')).split('\n').map(x => x.trim()).filter(Boolean);
+      try {
+        for (const line of lines) for (let k = 1; k <= n; k++) await dbCreate(C_TASKS, 'task', { meeting_id: null, group, title: n > 1 ? line + ' · Platz ' + k : line, status: 'offen', due_date: null, assignee_id: null, assignee_name: null });
+      } catch (ex) { return toast('Speichern fehlgeschlagen: ' + ex.message, true); }
+      adm.other = false; toast('Aufgabe gespeichert.'); await refresh(); return;
+    }
     if (e.target.id !== 'mf') return; e.preventDefault();
     const f = new FormData(e.target), old = adm.meeting || {};
     const extra = String(f.get('tasks') || '').split('\n').map(s => s.trim()).filter(Boolean);

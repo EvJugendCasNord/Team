@@ -17,10 +17,12 @@ async function load() {
 }
 const upcoming = () => meetings.filter(m => new Date(m.starts_at) >= new Date());
 const slotHtml = t => t.assignee_id
-  ? `<div class="slot"><b>${esc(t.title)}</b><span class="taken">✔ ${esc(t.assignee_name)}</span>${t.assignee_id === me.id || me.role === 'admin' ? `<button data-rel="${t.id}">Freigeben</button>` : ''}</div>`
-  : `<div class="slot"><b>${esc(t.title)}</b><form class="claim" data-claim="${t.id}"><button class="primary">Mich eintragen</button><span class="mute">als ${esc(me.display_name)}</span></form></div>`;
+  ? `<div class="slot"><b>${esc(t.title)}</b><span class="taken">✔ ${esc(t.assignee_name)}</span>${t.assignee_id === me.id || me.role === 'admin' ? `<button data-rel="${t.id}">Freigeben</button>` : ''}${editMode ? `<button data-tdel="${t.id}">Löschen</button>` : ''}</div>`
+  : `<div class="slot"><b>${esc(t.title)}</b><form class="claim" data-claim="${t.id}"><button class="primary">Mich eintragen</button><span class="mute">als ${esc(me.display_name)}</span></form>${editMode ? `<button data-tdel="${t.id}">Löschen</button>` : ''}</div>`;
 
 // Änderungen an einer Aufgabe: immer frisch lesen, damit nichts unbemerkt überschrieben wird.
+const otherTasks = () => tasks.filter(t => !t.meeting_id);
+const otherGroups = () => [...new Set(otherTasks().map(t => t.group || 'Sonstiges'))];
 function taskBlock(mid) {
   const L = tasks.filter(t => t.meeting_id === mid);
   return L.map(slotHtml).join('');
@@ -42,13 +44,12 @@ const views = {
     return `<section class="card"><h2>Angemeldete Mitglieder (${L.length})</h2><ul class="l">${L.map(x => `<li><b>${esc(x.name)}</b>${x.id === me.id ? ' (du)' : ''} <span class="mute">seit ${new Date(x.joined).toLocaleDateString('de-DE')}</span></li>`).join('') || '<li class="mute">Noch niemand.</li>'}</ul><p class="mute">Neue Mitglieder erscheinen hier automatisch, sobald sie sich zum ersten Mal anmelden. Schon vorhandene Konten erscheinen, sobald sie die Seite das nächste Mal öffnen. Alle Konten siehst du außerdem in Appwrite unter Auth → Users.</p></section>`;
   },
   dashboard() {
-    const next = upcoming()[0], open = tasks.filter(t => t.status !== 'erledigt');
-    const dl = open.filter(t => t.due_date).sort(byStr('due_date')).slice(0, 6);
+    const next = upcoming()[0], open = tasks.filter(t => t.meeting_id && t.status !== 'erledigt');
     return `<div class="grid">
     <section class="card"><h2>Nächster Termin</h2>${next ? `<b>${esc(next.title)}</b><br>${fmt(next.starts_at)}${next.leaders ? `<br><span class="mute">Prediger: ${esc(next.leaders)}</span>` : ''}` : '<p class="mute">Noch kein Termin geplant.</p>'}</section>
     <section class="card"><h2>Offene Aufgaben</h2><ul class="l">${open.slice(0, 8).map(t => `<li>${esc(t.title)} <span class="badge">${esc(t.status)}</span><br><span class="mute">${esc(mName(t.meeting_id))} · ${t.assignee_name ? esc(t.assignee_name) : 'noch frei'}${t.due_date ? ' · bis ' + fmtDay(t.due_date) : ''}</span></li>`).join('') || '<li class="mute">Alles erledigt.</li>'}</ul></section>
     <section class="card"><h2>Meeting</h2><ul class="l">${upcoming().slice(0, 5).map(m => `<li><a href="#meetings">${esc(m.title)}</a><br><span class="mute">${fmt(m.starts_at)}</span></li>`).join('') || '<li class="mute">Keine Meetings.</li>'}</ul><p><a href="#meetings">Zum Meeting</a></p></section>
-    <section class="card"><h2>Anstehende Deadlines</h2><ul class="l">${dl.map(t => `<li>${fmtDay(t.due_date)}: ${esc(t.title)}<br><span class="mute">${esc(mName(t.meeting_id))}</span></li>`).join('') || '<li class="mute">Keine Fristen.</li>'}</ul></section></div>`;
+    <section class="card"><h2>Sonstige Aufgaben</h2><ul class="l">${otherGroups().map(g => { const L = otherTasks().filter(t => (t.group || 'Sonstiges') === g), free = L.filter(t => !t.assignee_id).length; return `<li><a href="#aufgaben">${esc(g)}</a><br><span class="mute">${free ? free + ' von ' + L.length + ' Plätzen frei' : 'Alle Plätze vergeben'}</span></li>`; }).join('') || '<li class="mute">Noch keine.</li>'}</ul><p><a href="#aufgaben">Zu den Aufgaben</a></p></section></div>`;
   },
   meetings() {
     const adm = editMode;
@@ -60,7 +61,9 @@ const views = {
     return Object.keys(by).sort().map(k => `<section class="card"><h2>${new Date(k + '-01').toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</h2><ul class="l">${by[k].map(m => `<li><b>${fmt(m.starts_at)}</b> – <a href="#meetings">${esc(m.title)}</a>${m.leaders ? ` <span class="mute">(${esc(m.leaders)})</span>` : ''}${editMode ? ` <button data-medit="${m.id}">Bearbeiten</button> <button data-mdel="${m.id}">Löschen</button>` : ''}</li>`).join('')}</ul></section>`).join('') || '<p class="card mute">Keine Termine.</p>';
   },
   aufgaben() {
-    return `<section class="card"><h2>Alle Aufgaben</h2><ul class="l">${tasks.map(t => `<li>${esc(t.title)} <span class="badge">${esc(t.status)}</span><br><span class="mute">${esc(mName(t.meeting_id))} · ${esc(t.assignee_name || 'frei')}</span>${t.assignee_id === me.id || me.role === 'admin' ? ` <select data-st="${t.id}" aria-label="Status">${['offen', 'in Bearbeitung', 'erledigt'].map(s => `<option${s === t.status ? ' selected' : ''}>${s}</option>`).join('')}</select>` : ''}${editMode ? ` <button data-tdel="${t.id}">Löschen</button>` : ''}</li>`).join('')}</ul></section>`;
+    const G = otherGroups();
+    return `<h2>Sonstige Aufgaben</h2><p class="mute">Aufgaben außerhalb der Meetings, zum Beispiel Schichten. Trag dich selbst ein.</p>` + (editMode ? adminOtherForm() : '') +
+      (G.map(g => `<section class="card"><h2>${esc(g)}</h2>${otherTasks().filter(t => (t.group || 'Sonstiges') === g).map(slotHtml).join('')}${editMode ? `<p class="noprint"><button data-gdel="${encodeURIComponent(g)}">Diese Aufgabe mit allen Plätzen löschen</button></p>` : ''}</section>`).join('') || `<p class="card mute">Noch keine sonstigen Aufgaben.${editMode ? '' : ' Ein Admin kann sie anlegen.'}</p>`);
   }
 };
 
@@ -120,5 +123,5 @@ window.addEventListener('hashchange', render);
   }
   root.innerHTML = '<p class="card">Lade …</p>'; await refresh();
   if (editMode) adminInit();
-  setInterval(() => { if (!document.activeElement?.matches('input,textarea,select') && !document.querySelector('#mf, #cf') && !location.hash.startsWith('#liturgie/')) refresh(); }, 30000);
+  setInterval(() => { if (!document.activeElement?.matches('input,textarea,select') && !document.querySelector('#mf, #cf, #of') && !location.hash.startsWith('#liturgie/')) refresh(); }, 30000);
 })();

@@ -19,6 +19,9 @@ Es gibt zwei Seiten mit dem gleichen Aufbau und der gleichen Menüleiste:
 
 In der Bearbeitungsansicht hat auch jeder Eintrag in **Predigten, Fürbitten, Spiele und Downloads** (bei Spielen und Predigten nach dem Aufklappen) die Knöpfe **Bearbeiten** und **Löschen**. Reiter **Meeting** und **Kalender** haben „+ Neues Meeting“ sowie bei jedem Meeting **Bearbeiten** und **Löschen**. Vergangene Meetings stehen ganz unten im Reiter Meeting. Reiter **Aufgaben**: **Löschen**. Reiter **Predigten, Fürbitten, Spiele, Downloads**: unten Bereich zum Anlegen, Ändern, Löschen.
 
+## Sonstige Aufgaben
+Der Reiter **Aufgaben** zeigt Aufgaben außerhalb der Meetings, zum Beispiel Schichten beim Adventsdorf. Admins legen sie in der Bearbeitungsansicht mit **+ Neue Aufgabe** an: Titel, Schichten (eine pro Zeile) und Plätze pro Zeile. Jeder trägt sich dann selbst mit seinem Kontonamen ein. Gleicher Titel wie eine vorhandene Aufgabe: Die neuen Zeilen kommen dort dazu. Aufgaben der Meetings stehen nur noch im Reiter Meeting.
+
 ## Downloads
 Der Bereich hat feste Kategorien: **Flyer, Blocktag, Konfifahrt, Andere Dokumente**. Sie werden automatisch angelegt, sobald ein Admin die Admin-Ansicht öffnet. Beim Hochladen wählt man eine Kategorie aus.
 
